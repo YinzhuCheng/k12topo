@@ -10,6 +10,7 @@ import { isAnswerCardV1, safeFilenamePart, type AnswerCardV1 } from './lib/answe
 import { ImageModal } from './components/ImageModal';
 import { QuestionGrid, type GridItem } from './components/QuestionGrid';
 import { QuestionPanel } from './components/QuestionPanel';
+import { ResultMatrix } from './components/ResultMatrix';
 
 function normalizeChoice(s: string): string {
   return (s ?? '').trim().toUpperCase();
@@ -626,6 +627,10 @@ export function App() {
                         <span className="badge">总用时：{formatDuration(elapsedMs)}</span>
                       </div>
                     </div>
+                  </div>
+
+                  <div style={{ marginTop: 14 }}>
+                    <ResultMatrix items={resultGrid} title="每题判定矩阵" />
                   </div>
                 </div>
 
