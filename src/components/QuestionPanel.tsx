@@ -50,6 +50,7 @@ export function QuestionPanel(props: {
   correct?: boolean;
   correctAnswer?: string;
 }) {
+  const lastNumericWarnAtRef = React.useRef<number>(0);
   const { stem, options } = pickText(props.question);
   const imgSrc = toPublicImagePath(props.question.image);
 
@@ -67,6 +68,8 @@ export function QuestionPanel(props: {
 
   const correctAnswer = (props.correctAnswer ?? props.question.answer ?? '').trim();
   const userAnswer = (props.value ?? '').trim();
+  const expectsDigitsOnly =
+    props.question.questionType === 'Fill-in-the-blank' && /^\d+$/.test((props.question.answer ?? '').trim());
 
   return (
     <div className="card">
@@ -151,7 +154,30 @@ export function QuestionPanel(props: {
               className="input"
               value={props.value}
               disabled={props.mode === 'review'}
-              onChange={(e) => props.onChange(e.target.value)}
+              inputMode={expectsDigitsOnly ? 'numeric' : undefined}
+              pattern={expectsDigitsOnly ? '[0-9]*' : undefined}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (!expectsDigitsOnly) {
+                  props.onChange(raw);
+                  return;
+                }
+
+                // For numeric-answer blanks, reject any extra characters like "只/个".
+                const hasNonDigit = raw.trim() !== '' && /[^\d]/.test(raw);
+                const digitsOnly = raw.replace(/[^\d]/g, '');
+
+                if (hasNonDigit) {
+                  const now = Date.now();
+                  // Throttle alerts to avoid spamming on every keypress.
+                  if (now - lastNumericWarnAtRef.current > 1500) {
+                    lastNumericWarnAtRef.current = now;
+                    window.alert('本题答案为数字，请只填写数字，不要输入“只/个”等其他多余字符。');
+                  }
+                }
+
+                props.onChange(digitsOnly);
+              }}
               placeholder="请输入答案"
             />
 
